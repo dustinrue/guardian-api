@@ -12,6 +12,8 @@ var db = new sqlite3.Database(':memory:');
 var apiKey = '9b9d966677e44029b28da69312b960ed';
 var bungieInitialTokenURL = '/en/Application/Authorize/10767';
 var tokens = '';
+var accessToken = '';
+var refreshToken = '';
 
 var app = express();
 
@@ -24,7 +26,7 @@ app.get('/', function(req, res) {
         /*
         res.send("Adding user<br/>");
         try {
-	  db.run("INSERT INTO token (username) VALUES($username)", { $username: 'RealAngryMonkey' });
+	  
         }
         catch (e) {
           console.log("Failed to create user");
@@ -66,7 +68,22 @@ app.get('/initial', function(req, res) {
       tokens += chunk;
     });
     tokenRes.on('end', function() {
-      res.send(tokens);
+      if (tokens.ErrorStatus === "Success") {
+        var now = Date.getTime();
+        var accessTokenExpires = now + tokens.Response.accessToken.expires;
+        var refreshTokenExpires = now + tokens.Response.refreshToken.expires;
+        accessToken = tokens.Response.accessToken.value;
+        refreshToken = tokens.Response.refreshToken.value;
+        db.run("INSERT INTO token (username, accessToken, refreshToken, accessTokenExpires, refreshTokenExpires) \
+          VALUES($username, $accessToken, $refreshToken, $accessTokenExpires, $refreshTokenExpires)", { 
+            $username: 'RealAngryMonkey',
+            $accessToken: accessToken,
+            $refreshToken: refreshToken,
+            $accessTokenExpires: accessTokenExpires,
+            $refreshTokenExpires: refreshTokenExpires,
+            $tokensAdded: now
+          });
+      }
     });
   });
 
@@ -81,7 +98,12 @@ https.createServer({
   cert: fs.readFileSync('ssl/cert.pem')
 }, app).listen(3000, function() {
   db.serialize(function() {
-    db.run("CREATE TABLE token (username TEXT, token TEXT, refreshToken TEXT)");
+    db.run("CREATE TABLE token (username TEXT, \
+      accessToken TEXT, \
+      refreshToken TEXT, \
+      accessTokenExpires INTEGER, \
+      refreshTokenExpires INTEGER\
+      tokensAdded INTEGER)");
   });
   
   console.log("Ready on port 3000");
