@@ -3,7 +3,6 @@
 var express = require('express');
 var fs = require('fs');
 var url = require('url');
-var routes = require('./routes');
 var sqlite3 = require('sqlite3').verbose();
 var https = require('https');
 var querystring = require('querystring');
