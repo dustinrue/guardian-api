@@ -10,6 +10,7 @@
   "author": "Dustin Rue <ruedu@dustinrue.com>",
   "license": "ISC",
   "dependencies": {
+    "express": "^4.14.0",
     "sqlite3": "^3.1.8"
   }
 }
