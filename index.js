@@ -20,7 +20,7 @@ var app = express();
 // the username is always RealAngryMonkey
 app.get('/', function(req, res) {
   db.serialize(function() {
-    db.get("SELECT username, token, refreshToken FROM token WHERE username = 'RealAngryMonkey'", function(err, row) {
+    db.get("SELECT username, accessToken, refreshToken FROM token WHERE username = 'RealAngryMonkey'", function(err, row) {
       if (typeof(row) === "undefined") {
         res.redirect(302, 'https://www.bungie.net' + bungieInitialTokenURL + "?state=test");
         /*
