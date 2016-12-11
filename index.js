@@ -92,8 +92,8 @@ app.get('/initial', function(req, res) {
         res.send("added!");
       }
       else {
-        res.send("An error occurred<br/>");
-        res.send(tokens);
+        console.log("Error");
+        console.log(tokens);
       }
     });
   });
