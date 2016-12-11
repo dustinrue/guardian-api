@@ -71,7 +71,7 @@ app.get('/initial', function(req, res) {
     tokenRes.on('end', function() {
       console.log("end");
       console.log(tokens);
-      if (tokens.Response.ErrorStatus === "Success") {
+      if (tokens.ErrorStatus == "Success") {
         var now = Date.getTime();
         var accessTokenExpires = now + tokens.Response.accessToken.expires;
         var refreshTokenExpires = now + tokens.Response.refreshToken.expires;
