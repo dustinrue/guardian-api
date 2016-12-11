@@ -83,6 +83,7 @@ app.get('/initial', function(req, res) {
             $refreshTokenExpires: refreshTokenExpires,
             $tokensAdded: now
           });
+        res.send("added!");
       }
     });
   });
