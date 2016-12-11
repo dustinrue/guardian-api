@@ -69,6 +69,7 @@ app.get('/initial', function(req, res) {
       
     });
     tokenRes.on('end', function() {
+      tokens = JSON.parse(tokens);
       console.log(tokens.Response);
       console.log(tokens);
       if (tokens.ErrorStatus == "Success") {
