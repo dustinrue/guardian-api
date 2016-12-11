@@ -66,6 +66,7 @@ app.get('/initial', function(req, res) {
     tokenRes.setEncoding('utf8');
     tokenRes.on('data', function(chunk) {
       tokens += chunk;
+      console.log("got data");
     });
     tokenRes.on('end', function() {
       console.log(tokens);
