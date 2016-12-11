@@ -3,7 +3,6 @@
 var express = require('express');
 var fs = require('fs');
 var url = require('url');
-var Date = require('date');
 var sqlite3 = require('sqlite3').verbose();
 var https = require('https');
 var querystring = require('querystring');
@@ -74,7 +73,7 @@ app.get('/initial', function(req, res) {
       console.log(tokens.Response);
       console.log(tokens);
       if (tokens.ErrorStatus == "Success") {
-        var now = Date.getTime();
+        var now = Math.floor(new Date() / 1000);
         var accessTokenExpires = now + tokens.Response.accessToken.expires;
         var refreshTokenExpires = now + tokens.Response.refreshToken.expires;
         accessToken = tokens.Response.accessToken.value;
