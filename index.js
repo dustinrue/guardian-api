@@ -66,11 +66,12 @@ app.get('/initial', function(req, res) {
     tokenRes.setEncoding('utf8');
     tokenRes.on('data', function(chunk) {
       tokens += chunk;
-      console.log("got data");
+      
     });
     tokenRes.on('end', function() {
+      console.log("end");
       console.log(tokens);
-      if (tokens.ErrorStatus === "Success") {
+      if (tokens.Response.ErrorStatus === "Success") {
         var now = Date.getTime();
         var accessTokenExpires = now + tokens.Response.accessToken.expires;
         var refreshTokenExpires = now + tokens.Response.refreshToken.expires;
