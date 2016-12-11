@@ -35,7 +35,7 @@ app.get('/', function(req, res) {
         */
       }
       else {
-        dateTime = new Date().setTime(row.accessTokenExpires);
+        var dateTime = new Date().setTime(row.accessTokenExpires);
         res.send('Hello ' + row.username + '. Your token expires at ' + dateTime.toUTCString());
       }
     });
