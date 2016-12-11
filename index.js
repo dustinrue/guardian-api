@@ -90,6 +90,45 @@ var guardianApi = (function() {
     this.accessTokenExpires = accessTokenExpires;
   };
 
+  var refreshTokens = function(callback) {
+
+    if (typeof(guardianApi.refreshToken) == "undefined") {
+      callback({})
+    }
+    else {
+      var post_data = {
+        'refreshToken': guardianApi.refreshToken,
+      }
+
+      post_data = JSON.stringify(post_data);
+
+      postRequest('/Platform/App/GetAccessTokensFromRefreshToken/', post_data, function(responseData) {
+        
+        if (responseData.ErrorStatus == "Success") {
+          var now = timestamp.now();
+
+          guardianApi.accessTokenExpires = now + responseData.Response.accessToken.expires;
+          guardianApi.refreshTokenExpires = now + responseData.Response.refreshToken.expires;
+          guardianApi.accessToken = responseData.Response.accessToken.value;
+          guardianApi.refreshToken = responseData.Response.refreshToken.value;
+
+          var tokenData = {
+            'accessToken': guardianApi.accessToken,
+            'accessTokenExpires': guardianApi.accessTokenExpires,
+            'refreshToken': guardianApi.refreshToken,
+            'refreshTokenExpires': guardianApi.refreshTokenExpires
+          }
+          guardianApi.newTokenCallback(tokenData);
+          callback(tokenData);
+        }
+        else {
+          console.log(responseData);
+          callback({});
+        }
+      });
+    }
+  };
+
   return {
     setApiKey: function(apiKey) {
       this.apiKey = apiKey;
@@ -152,6 +191,8 @@ var guardianApi = (function() {
         }
       });
     },
+
+    refresh: refreshTokens,
 
     isAuthorized: function() {
       return (typeof(guardianApi.accessToken) !== "undefined");
