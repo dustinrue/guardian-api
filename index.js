@@ -69,7 +69,6 @@ app.get('/initial', function(req, res) {
       
     });
     tokenRes.on('end', function() {
-      console.log("end");
       console.log(tokens.ErrorStatus);
       if (tokens.ErrorStatus == "Success") {
         var now = Date.getTime();
@@ -88,12 +87,12 @@ app.get('/initial', function(req, res) {
             $tokensAdded: now
           });
         });
-        
         res.send("added!");
       }
       else {
         console.log("Error");
         console.log(tokens);
+        res.send("sigh");
       }
     });
   });
