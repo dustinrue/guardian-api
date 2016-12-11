@@ -69,7 +69,7 @@ app.get('/initial', function(req, res) {
       
     });
     tokenRes.on('end', function() {
-      console.log(tokens.ErrorStatus);
+      console.log(tokens);
       if (tokens.ErrorStatus == "Success") {
         var now = Date.getTime();
         var accessTokenExpires = now + tokens.Response.accessToken.expires;
@@ -90,8 +90,6 @@ app.get('/initial', function(req, res) {
         res.send("added!");
       }
       else {
-        console.log("Error");
-        console.log(tokens);
         res.send("sigh");
       }
     });
