@@ -112,7 +112,7 @@ https.createServer({
       accessToken TEXT, \
       refreshToken TEXT, \
       accessTokenExpires INTEGER, \
-      refreshTokenExpires INTEGER \
+      refreshTokenExpires INTEGER, \
       tokensAdded INTEGER)");
   });
   
