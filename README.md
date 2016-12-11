@@ -3,7 +3,7 @@ Simplified access to Bungie's Destiny API including OAuth.
 
 ## Example Usage
 
-```
+```javascript
 'use strict';
 
 var bungie = require('../guardian-api');
