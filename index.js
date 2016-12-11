@@ -70,8 +70,6 @@ app.get('/initial', function(req, res) {
     });
     tokenRes.on('end', function() {
       tokens = JSON.parse(tokens);
-      console.log(tokens.Response);
-      console.log(tokens);
       if (tokens.ErrorStatus == "Success") {
         var now = Math.floor(new Date() / 1000);
         var accessTokenExpires = now + tokens.Response.accessToken.expires;
@@ -89,7 +87,7 @@ app.get('/initial', function(req, res) {
             $tokensAdded: now
           });
         });
-        res.send("added!");
+        res.redirect(302, '/');
       }
       else {
         res.send("sigh");
