@@ -70,6 +70,7 @@ app.get('/initial', function(req, res) {
     });
     tokenRes.on('end', function() {
       console.log(tokens.Response);
+      console.log(tokens);
       if (tokens.ErrorStatus == "Success") {
         var now = Date.getTime();
         var accessTokenExpires = now + tokens.Response.accessToken.expires;
