@@ -74,7 +74,8 @@ app.get('/initial', function(req, res) {
         var refreshTokenExpires = now + tokens.Response.refreshToken.expires;
         accessToken = tokens.Response.accessToken.value;
         refreshToken = tokens.Response.refreshToken.value;
-        db.run("INSERT INTO token (username, accessToken, refreshToken, accessTokenExpires, refreshTokenExpires) \
+        db.serialize(function() {
+          db.run("INSERT INTO token (username, accessToken, refreshToken, accessTokenExpires, refreshTokenExpires) \
           VALUES($username, $accessToken, $refreshToken, $accessTokenExpires, $refreshTokenExpires)", { 
             $username: 'RealAngryMonkey',
             $accessToken: accessToken,
@@ -83,6 +84,8 @@ app.get('/initial', function(req, res) {
             $refreshTokenExpires: refreshTokenExpires,
             $tokensAdded: now
           });
+        });
+        
         res.send("added!");
       }
     });
