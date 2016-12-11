@@ -1,119 +1,172 @@
 'use strict';
 
-var express = require('express');
-var fs = require('fs');
-var url = require('url');
-var sqlite3 = require('sqlite3').verbose();
+// https://www.bungie.net/en/Help/Article/45481
+var urlParser = require('url');
 var https = require('https');
-var querystring = require('querystring');
-var db = new sqlite3.Database(':memory:');
+var timestamp = require('unix-timestamp');
 
+var guardianApi = (function() {
+  var accessToken, 
+    refreshToken, 
+    accessTokenExpires, 
+    refreshTokenExpires,
+    apiKey,
+    appId,
+    newTokenCallback;
 
-var apiKey = '9b9d966677e44029b28da69312b960ed';
-var bungieInitialTokenURL = '/en/Application/Authorize/10767';
-var tokens = '';
-var accessToken = '';
-var refreshToken = '';
+  var postRequest = function(url, post_data, callback) {
+    var responseData = ''; 
 
-var app = express();
-
-// the username is always RealAngryMonkey
-app.get('/', function(req, res) {
-  db.serialize(function() {
-    db.get("SELECT username, accessToken, refreshToken FROM token WHERE username = 'RealAngryMonkey'", function(err, row) {
-      if (typeof(row) === "undefined") {
-        res.redirect(302, 'https://www.bungie.net' + bungieInitialTokenURL + "?state=test");
-        /*
-        res.send("Adding user<br/>");
-        try {
-	  
-        }
-        catch (e) {
-          console.log("Failed to create user");
-          console.log(e);
-        }
-        */
+    var request_options = {
+      hostname: 'www.bungie.net',
+      path: url,
+      method: 'POST',
+      headers: {
+        'X-API-Key': guardianApi.apiKey,
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Content-Length': Buffer.byteLength(post_data)
       }
-      else {
-        var dateTime = new Date().setTime(row.accessTokenExpires);
-        res.send('Hello ' + row.username + '. Your token expires at ' + dateTime.getHours() + ":" + dateTime.getMinutes);
-      }
-    });
-  });
-});
-
-app.get('/initial', function(req, res) {
-  var url_parts = url.parse(req.url, true);
-  var code = url_parts.query.code;
-  var response = '';
-
-  var post_data = {
-    'code': code,
-  }
-  post_data = JSON.stringify(post_data);
-
-  var request_options = {
-    hostname: 'www.bungie.net',
-    path: '/Platform/App/GetAccessTokensFromCode/',
-    method: 'POST',
-    headers: {
-      'X-API-Key': apiKey,
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Content-Length': Buffer.byteLength(post_data)
     }
 
-  }
-  var post_req = https.request(request_options, function(tokenRes) {
-    tokenRes.setEncoding('utf8');
-    tokenRes.on('data', function(chunk) {
-      tokens += chunk;
-      
+    if (typeof(guardianApi.accessToken) !== "undefined") {
+      request_options.headers.Authorization = "Bearer " + guardianApi.accessToken;
+    }
+
+    var post_req = https.request(request_options, function(res) {
+      res.setEncoding('utf8');
+      res.on('data', function(chunk) {
+        responseData += chunk;
+      });
+      res.on('end', function() {
+        responseData = JSON.parse(responseData);
+        callback(responseData);
+      });
     });
-    tokenRes.on('end', function() {
-      tokens = JSON.parse(tokens);
-      if (tokens.ErrorStatus == "Success") {
-        var now = Math.floor(new Date() / 1000);
-        var accessTokenExpires = now + tokens.Response.accessToken.expires;
-        var refreshTokenExpires = now + tokens.Response.refreshToken.expires;
-        accessToken = tokens.Response.accessToken.value;
-        refreshToken = tokens.Response.refreshToken.value;
-        db.serialize(function() {
-          db.run("INSERT INTO token (username, accessToken, refreshToken, accessTokenExpires, refreshTokenExpires, tokensAdded) \
-          VALUES($username, $accessToken, $refreshToken, $accessTokenExpires, $refreshTokenExpires, $tokensAdded)", { 
-            $username: 'RealAngryMonkey',
-            $accessToken: accessToken,
-            $refreshToken: refreshToken,
-            $accessTokenExpires: accessTokenExpires,
-            $refreshTokenExpires: refreshTokenExpires,
-            $tokensAdded: now
-          });
-        });
-        res.redirect(302, '/');
+
+    post_req.write(post_data);
+    post_req.end();
+  };
+
+  var getRequest = function(url, callback) {
+    var responseData = ''; 
+
+    var request_options = {
+      hostname: 'www.bungie.net',
+      path: url,
+      method: 'GET',
+      headers: {
+        'X-API-Key': guardianApi.apiKey,
+        'Content-Type': 'application/json; charset=UTF-8',
+      }
+    }
+
+    if (typeof(guardianApi.accessToken) !== "undefined") {
+      request_options.headers.Authorization = "Bearer " + guardianApi.accessToken;
+    }
+
+    var get_req = https.request(request_options, function(res) {
+      res.setEncoding('utf8');
+      res.on('data', function(chunk) {
+        responseData += chunk;
+      });
+      res.on('end', function() {
+        responseData = JSON.parse(responseData);
+        callback(responseData);
+      });
+    });
+
+    get_req.end();
+  };
+
+  var setAccessToken = function(accessToken) {
+    this.accessToken = accessToken;
+  };
+
+  var setRefreshToken = function(refreshToken) {
+    this.refreshToken = refreshToken;
+  };
+
+  var setAccessTokenExpires = function(accessTokenExpires) {
+    this.accessTokenExpires = accessTokenExpires;
+  };
+
+  return {
+    setApiKey: function(apiKey) {
+      this.apiKey = apiKey;
+    },
+
+    setAppID: function(appId) {
+      this.appId = appId;
+    },
+
+    authorize: function(res, state) {
+      if (typeof(state) != "undefined" && state != "") {
+        res.redirect(302, "https://www.bungie.net/en/Application/Authorize/" + this.appId + "?state=" + state);
       }
       else {
-        res.send("sigh");
+        res.redirect(302, "https://www.bungie.net/en/Application/Authorize/" + this.appId);
       }
-    });
-  });
+      
+    },
 
-  post_req.write(post_data);
-  post_req.end();
+    setTokenData: function(tokenData) {
+      console.log(tokenData);
+    },
 
-});
+    setNewTokenCallback: function(callback) {
+      this.newTokenCallback = callback;
+      this.newTokenCallback({});
+    },
 
-// http://blog.mgechev.com/2014/02/19/create-https-tls-ssl-application-with-express-nodejs/
-https.createServer({
-  key: fs.readFileSync('ssl/key.pem'),
-  cert: fs.readFileSync('ssl/cert.pem')
-}, app).listen(3000, function() {
-  db.serialize(function() {
-    db.run("CREATE TABLE token (username TEXT, \
-      accessToken TEXT, \
-      refreshToken TEXT, \
-      accessTokenExpires INTEGER, \
-      refreshTokenExpires INTEGER, \
-      tokensAdded INTEGER)");
-  });
+    parseCode: function(url, state, callback) {
+      var url_parts = urlParser.parse(url, true);
+      var code = url_parts.query.code;
+      var response = '';
+
+      var post_data = {
+        'code': code,
+      }
+
+      post_data = JSON.stringify(post_data);
+
+      postRequest('/Platform/App/GetAccessTokensFromCode/', post_data, function(responseData) {
+        if (responseData.ErrorStatus == "Success") {
+          var now = timestamp.now();
+
+          guardianApi.accessTokenExpires = now + responseData.Response.accessToken.expires;
+          guardianApi.refreshTokenExpires = now + responseData.Response.refreshToken.expires;
+          guardianApi.accessToken = responseData.Response.accessToken.value;
+          guardianApi.refreshToken = responseData.Response.refreshToken.value;
+
+          var tokenData = {
+            'accessToken': guardianApi.accessToken,
+            'accessTokenExpires': guardianApi.accessTokenExpires,
+            'refreshToken': guardianApi.refreshToken,
+            'refreshTokenExpires': guardianApi.refreshTokenExpires
+          }
+          guardianApi.newTokenCallback(tokenData);
+          callback(tokenData);
+        }
+        else {
+          callback({});
+        }
+      });
+    },
+
+    isAuthorized: function() {
+      return (typeof(guardianApi.accessToken) !== "undefined");
+    },
+
+    getBungieNetUser: function(callback) {
+      getRequest('/Platform/User/GetBungieNetUser/', function(responseData) {
+        callback(responseData);
+      });
+    }
+  }
+})();
+
+var parseCode = function(url, callback) {
   
-  console.log("Ready on port 3000");
-});
+}
+
+module.exports = guardianApi; 

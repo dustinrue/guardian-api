@@ -1,7 +1,7 @@
 {
-  "name": "bungie-oauth2",
+  "name": "guardian-api",
   "version": "0.0.1",
-  "description": "Provides Bungie OAuth2 functionality",
+  "description": "Provides access to Bungie's API with OAuth2 functionality",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -10,7 +10,6 @@
   "author": "Dustin Rue <ruedu@dustinrue.com>",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.14.0",
-    "sqlite3": "^3.1.8"
+    "unix-timestamp": "^0.2.0"
   }
 }
