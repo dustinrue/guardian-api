@@ -79,8 +79,8 @@ app.get('/initial', function(req, res) {
         accessToken = tokens.Response.accessToken.value;
         refreshToken = tokens.Response.refreshToken.value;
         db.serialize(function() {
-          db.run("INSERT INTO token (username, accessToken, refreshToken, accessTokenExpires, refreshTokenExpires) \
-          VALUES($username, $accessToken, $refreshToken, $accessTokenExpires, $refreshTokenExpires)", { 
+          db.run("INSERT INTO token (username, accessToken, refreshToken, accessTokenExpires, refreshTokenExpires, tokensAdded) \
+          VALUES($username, $accessToken, $refreshToken, $accessTokenExpires, $refreshTokenExpires, $tokensAdded)", { 
             $username: 'RealAngryMonkey',
             $accessToken: accessToken,
             $refreshToken: refreshToken,
